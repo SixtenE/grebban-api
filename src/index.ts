@@ -43,15 +43,35 @@ app.get("/products", (c) => {
         value: colorAttributeMap[code] || code,
       })) || [];
 
+    const matchingCategoryNames = product.attributes.cat
+      ?.split(",")
+      .map((code) => {
+        const categories = Object.keys(categoryAttributeMap).filter(
+          (categoryCode) => code.includes(categoryCode)
+        );
+        return categories;
+      });
+
     const productCategoryAttributes =
-      product.attributes.cat?.split(",").map((code) => ({
-        name: "Category" as const,
-        value: categoryAttributeMap[code] || code,
-      })) || [];
+      matchingCategoryNames?.map((codeArray) =>
+        codeArray.length > 1
+          ? {
+              name: "Category" as const,
+              value: codeArray
+                .sort((a, b) => a.length - b.length)
+                .map((code) => categoryAttributeMap[code] || code)
+                .join(" > "),
+            }
+          : {
+              name: "Category" as const,
+              value: categoryAttributeMap[codeArray[0]] || codeArray[0],
+            }
+      ) || [];
 
     const productWithAttributes: Product = {
       id: product.id,
       name: product.name,
+
       attributes: [...productColorAttributes, ...productCategoryAttributes],
     };
 
