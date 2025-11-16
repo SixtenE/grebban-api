@@ -2,6 +2,14 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { products, attributes } from "./data/index.js";
 
+const colorAttributeMap = Object.fromEntries(
+  attributes[0].values.map((attr) => [attr.code, attr.name])
+);
+
+const categoryAttributeMap = Object.fromEntries(
+  attributes[1].values.map((attr) => [attr.code, attr.name])
+);
+
 const app = new Hono();
 
 export type Product = {
@@ -28,40 +36,30 @@ app.get("/products", (c) => {
     cursor + parseInt(page_size)
   );
 
-  const colors = attributes[0];
-  const categories = attributes[1];
+  const productsWithAttributeNames = productsPaginated.map((product) => {
+    const productColorAttributes =
+      product.attributes.color?.split(",").map((code) => ({
+        name: "Color" as const,
+        value: colorAttributeMap[code] || code,
+      })) || [];
 
-  const productsWithAttributes = productsPaginated.map((product) => {
-    const productColors = product.attributes.color?.split(",").map((code) => ({
-      name: "Color",
-      value: colors.values.find((c) => c.code === code)?.name,
-    }));
+    const productCategoryAttributes =
+      product.attributes.cat?.split(",").map((code) => ({
+        name: "Category" as const,
+        value: categoryAttributeMap[code] || code,
+      })) || [];
 
-    const productCategories = product.attributes.cat?.split(",").map((code) => {
-      const categoriesSplit = code.split("_");
-      const mainCategoryCode = categoriesSplit.slice(0, -1).join("_");
-
-      return {
-        name: "Category",
-        value:
-          categoriesSplit.length > 2
-            ? `${
-                categories.values.find((c) => c.code === mainCategoryCode)?.name
-              } > ${categories.values.find((c) => c.code === code)?.name}`
-            : categories.values.find((c) => c.code === code)?.name,
-      };
-    });
-
-    return {
+    const productWithAttributes: Product = {
       id: product.id,
       name: product.name,
-
-      attributes: [...(productColors ?? []), ...(productCategories ?? [])],
+      attributes: [...productColorAttributes, ...productCategoryAttributes],
     };
+
+    return productWithAttributes;
   });
 
   return c.json({
-    products: productsWithAttributes,
+    products: productsWithAttributeNames,
     page: parseInt(page),
     totalPages,
   });
