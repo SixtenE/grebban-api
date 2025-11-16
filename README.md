@@ -24,3 +24,11 @@ Jag deplojade mitt API till en lambda på AWS med hjälp av SST
 [https://grebban.sixten.app/api/products](https://grebban.sixten.app/api/products)
 
 ![grebban-api AWS deployment](grebban-api-aws.jpg)
+
+### Instruktioner för att köra lokalt
+
+1. Klona repot
+2. Skapa en `.env`-fil i rotmappen med innehållet från `example.env`
+3. Kör `npm install`
+4. Kör `npm run dev`
+5. Gå till [`http://localhost:3000/api/products`](http://localhost:3000/api/products)
