@@ -1,6 +1,8 @@
+import "dotenv/config";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { products, attributes } from "./data/index.js";
+import { handle } from "hono/aws-lambda";
 
 const colorAttributeMap = Object.fromEntries(
   attributes[0].values.map((attr) => [attr.code, attr.name])
@@ -21,7 +23,7 @@ export type Product = {
   }[];
 };
 
-app.get("/products", (c) => {
+app.get("/api/products", (c) => {
   const { page = "1", page_size = "2" } = c.req.query();
 
   const cursor = (parseInt(page) - 1) * parseInt(page_size);
@@ -85,12 +87,15 @@ app.get("/products", (c) => {
   });
 });
 
-serve(
-  {
-    fetch: app.fetch,
-    port: 3000,
-  },
-  (info) => {
-    console.log(`Server is running on http://localhost:${info.port}`);
-  }
-);
+export const handler = handle(app);
+
+process.env.NODE_ENV === "development" &&
+  serve(
+    {
+      fetch: app.fetch,
+      port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
+    },
+    (info) => {
+      console.log(`Server is running on http://localhost:${info.port}`);
+    }
+  );
